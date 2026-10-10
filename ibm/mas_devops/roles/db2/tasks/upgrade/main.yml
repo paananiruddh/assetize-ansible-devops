@@ -43,6 +43,16 @@
   set_fact:
     detected_db2u_kind: "{{ 'db2ucluster' if (existing_db2_cluster_lookup.resources is defined and existing_db2_cluster_lookup.resources | length > 0) else 'db2uinstance' }}"
 
+# When DB2U_KIND has not been explicitly set, upgrade whatever kind of deployment already exists rather than
+# failing the mismatch check below because db2u_kind fell back to its 'db2ucluster' default
+- name: "Use detected deployment type when DB2U_KIND is not set"
+  when:
+    - found_db2_namespace
+    - lookup('env', 'DB2U_KIND') | default('', true) == ''
+    - (existing_db2_cluster_lookup.resources | default([]) | length > 0) or (existing_db2_instance_lookup.resources | default([]) | length > 0)
+  set_fact:
+    db2u_kind: "{{ detected_db2u_kind }}"
+
 - name: "Debug deployment type information"
   when: found_db2_namespace
   ansible.builtin.debug:
