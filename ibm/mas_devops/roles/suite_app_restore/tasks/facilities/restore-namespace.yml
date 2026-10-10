@@ -64,17 +64,37 @@
   set_fact:
     facilities_workspace_cr_name: "{{ workspace_backup_cr.metadata.name }}"
 
-- name: "Set fact: mas_workspace_id from FacilitiesWorkspace backup CR label"
+# The workspace ID is used to name the restored PVCs (<instanceId>-<workspaceId>-<pvcName>).
+# Derive it from the backup CR: prefer the 'mas.ibm.com/workspaceId' label, and fall back to
+# the CR name, which is always '<instanceId>-<workspaceId>'.
+- name: "Set fact: workspace ID recorded in the FacilitiesWorkspace backup CR"
   set_fact:
-    mas_workspace_id: "{{ workspace_backup_cr.metadata.labels['mas.ibm.com/workspaceId'] }}"
-  when: mas_workspace_id == '' or mas_workspace_id is not defined
+    _backup_workspace_id: >-
+      {{ (workspace_backup_cr.metadata.labels | default({}, true)).get('mas.ibm.com/workspaceId', '')
+         or (workspace_backup_cr.metadata.name[(mas_instance_id | length + 1):]
+             if workspace_backup_cr.metadata.name.startswith(mas_instance_id ~ '-') else '') }}
+
+- name: "Set fact: mas_workspace_id from FacilitiesWorkspace backup CR"
+  set_fact:
+    mas_workspace_id: "{{ _backup_workspace_id }}"
+  when: mas_workspace_id is not defined or mas_workspace_id == ''
 
 - name: "Fail if mas_workspace_id could not be determined"
   fail:
     msg: >-
       mas_workspace_id could not be determined. The FacilitiesWorkspace backup CR at
-      {{ instance_files[0] }} does not have the label 'mas.ibm.com/workspaceId'.
-  when: mas_workspace_id == '' or mas_workspace_id is not defined
+      {{ instance_files[0] }} does not have the label 'mas.ibm.com/workspaceId' and its name
+      does not follow the '<instanceId>-<workspaceId>' convention. Set MAS_WORKSPACE_ID explicitly.
+  when: mas_workspace_id is not defined or mas_workspace_id == ''
+
+- name: "Fail if mas_workspace_id does not match the FacilitiesWorkspace backup CR"
+  fail:
+    msg: >-
+      Requested workspace ID '{{ mas_workspace_id }}' does not match the workspace ID
+      '{{ _backup_workspace_id }}' recorded in the FacilitiesWorkspace backup CR at {{ instance_files[0] }}.
+  when:
+    - _backup_workspace_id != ''
+    - mas_workspace_id != _backup_workspace_id
 
 - name: "Display resolved mas_workspace_id"
   debug:
