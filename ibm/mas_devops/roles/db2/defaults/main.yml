@@ -28,6 +28,11 @@ db2_workload: "{{ lookup('env', 'DB2_WORKLOAD') | default('ANALYTICS', true) }}"
 
 # Storage
 # -----------------------------------------------------------------------------
+# Default RWO/RWX storage classes, used for any of the Db2 storage classes below that are not set,
+# before falling back to the cluster's auto-detected default storage classes
+db2_default_storage_class_rwo: "{{ lookup('env', 'DB2_DEFAULT_STORAGE_CLASS_RWO') }}"
+db2_default_storage_class_rwx: "{{ lookup('env', 'DB2_DEFAULT_STORAGE_CLASS_RWX') }}"
+
 # Configure meta storage for db2u
 db2_meta_storage_class: "{{ lookup('env', 'DB2_META_STORAGE_CLASS') }}"
 db2_meta_storage_size: "{{ lookup('env', 'DB2_META_STORAGE_SIZE') | default('10Gi', true) }}"

@@ -542,6 +542,15 @@ Rotates the password for an **existing** Db2 LDAP user.
 ### Storage Variables
 We recommend reviewing the Db2 documentation about the certified storage options for Db2 on Red Hat OpenShift. Please ensure your storage class meets the specified deployment requirements for [Db2uInstance](https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2uinstance-custom) and for [Db2uCluster](https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2ucluster-custom).
 
+#### db2_default_storage_class_rwo / db2_default_storage_class_rwx
+Default ReadWriteOnce / ReadWriteMany storage classes for the Db2 volumes.
+
+- Optional
+- Environment Variables: `DB2_DEFAULT_STORAGE_CLASS_RWO`, `DB2_DEFAULT_STORAGE_CLASS_RWX`
+- Default: None
+
+**Purpose**: Any of `db2_data_storage_class`, `db2_logs_storage_class` and `db2_temp_storage_class` that is not set uses `db2_default_storage_class_rwo`; any of `db2_meta_storage_class` and `db2_backup_storage_class` that is not set uses `db2_default_storage_class_rwx`. If neither is set, the cluster's auto-detected default storage classes are used. The MAS CLI install pipeline sets these from the install's RWO/RWX storage classes, so Db2-specific classes only need to be given where they differ.
+
 #### db2_meta_storage_class
 Storage class for Db2 metadata storage (must support ReadWriteMany).
 
