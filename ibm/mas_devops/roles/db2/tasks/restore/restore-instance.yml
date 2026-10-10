@@ -48,6 +48,18 @@
 
 # Get Db2u details from backup CR
 # -----------------------------------------------------------------------------
+# The database name is always taken from the backed-up Db2uCluster CR. If the caller
+# explicitly provided DB2_DBNAME (e.g. mas restore --manage-db2-dbname) make sure it
+# matches the backup rather than silently restoring a different database.
+- name: Fail if the requested database name does not match the backup
+  fail:
+    msg: >-
+      Requested Db2 database name '{{ lookup('env', 'DB2_DBNAME') }}' does not match the database name
+      '{{ db2ucluster_cr_cfg.spec.environment.database.name }}' recorded in the Db2uCluster backup {{ instance_files[0] }}
+  when:
+    - lookup('env', 'DB2_DBNAME') | default('', true) != ''
+    - lookup('env', 'DB2_DBNAME') != db2ucluster_cr_cfg.spec.environment.database.name
+
 - name: Set fact db2u namespace and instance name from backup CR
   set_fact:
     db2_namespace: "{{ db2ucluster_cr_cfg.metadata.namespace }}"

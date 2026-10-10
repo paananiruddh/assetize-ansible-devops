@@ -66,11 +66,11 @@ Specifies which backup version to restore. This should match the version identif
 - Example: `20240315-143022` or `v1.0-prod`
 
 ### mas_workspace_id
-Defines the MAS workspace ID for the restore action. If not provided, it is automatically derived from the `mas.ibm.com/workspaceId` label on the workspace backup CR.
+Defines the MAS workspace ID for the restore action, which is also used to name the restored PVCs (`<mas_instance_id>-<mas_workspace_id>-<pvcName>`). If not provided, it is derived from the `mas.ibm.com/workspaceId` label on the workspace backup CR, falling back to the backup CR name (`<mas_instance_id>-<workspaceId>`). The restore fails if neither yields a value. If set to a value that differs from the backup, it overrides the backup value and a warning is logged.
 
 - Optional
 - Environment Variable: `MAS_WORKSPACE_ID`
-- Default: Auto-discovered from workspace backup CR label `mas.ibm.com/workspaceId`
+- Default: Auto-discovered from the workspace backup CR (label `mas.ibm.com/workspaceId`, then CR name)
 
 ### mas_app_restore_wait_retries
 Maximum time in seconds to wait for ManageWorkspace to become ready after restore.
@@ -522,7 +522,7 @@ Troubleshooting
 
 Notes
 -------------------------------------------------------------------------------
-- **Workspace ID Auto-Discovery**: `mas_workspace_id` is automatically derived from the `mas.ibm.com/workspaceId` label on the workspace backup CR. You only need to set `MAS_WORKSPACE_ID` explicitly if you want to override the value from the backup
+- **Workspace ID Auto-Discovery**: `mas_workspace_id` is automatically derived from the `mas.ibm.com/workspaceId` label on the workspace backup CR, or from the backup CR name (`<mas_instance_id>-<workspaceId>`) if the label is missing. You only need to set `MAS_WORKSPACE_ID` explicitly if you want to override the value from the backup; a warning is logged when you do
 - **Database Restore**: This role does NOT restore application databases. Use the [db2](db2.md) role to restore Db2 databases separately, and do this BEFORE running the application restore
 - **Suite Resources**: This role restores application-specific resources only. For suite-level resources (Suite CR, workspace CRs, etc.), use the [suite_restore](suite_restore.md) role
 - **Instance ID Match**: The restore must be performed on a cluster with the same MAS instance ID as the backup
