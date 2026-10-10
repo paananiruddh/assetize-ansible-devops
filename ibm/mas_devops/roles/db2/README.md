@@ -31,7 +31,7 @@ Specifies which Db2 deployment type to use.
 
 - **Optional**
 - Environment Variable: `DB2U_KIND`
-- Default: `db2ucluster`
+- Default: `db2ucluster` (for `db2_action=upgrade`, the kind of the existing deployment when not set)
 
 **Purpose**: Controls whether to deploy Db2uCluster (deprecated) or Db2uInstance (current). This variable enables explicit control over deployment type while maintaining backward compatibility with existing deployments.
 
@@ -63,7 +63,9 @@ export DB2U_KIND=db2ucluster
 export DB2_INSTANCE_NAME=my-existing-cluster
 
 # Default behavior (backward compatible)
-# If DB2U_KIND is not set, defaults to db2ucluster
+# If DB2U_KIND is not set, defaults to db2ucluster for install.
+# For upgrade (DB2_ACTION=upgrade) an unset DB2U_KIND uses the kind of the
+# existing deployment (Db2uCluster or Db2uInstance) found in the namespace.
 export DB2_INSTANCE_NAME=my-db
 ```
 
@@ -236,6 +238,7 @@ Name of the database to create within the Db2 instance.
 **When to use**:
 - Use default (`BLUDB`) for standard MAS deployments
 - Set to a custom name when organizational standards require specific naming
+- For `db2_action=restore` the database name is always taken from the backup; if `DB2_DBNAME` is set and differs from the backup, the restore fails rather than restoring a different database
 - Must match the database name expected by applications connecting to Db2
 
 **Valid values**: Valid Db2 database name (uppercase alphanumeric, up to 8 characters, e.g., `BLUDB`, `MAXDB`, `MASDB`)
@@ -541,6 +544,15 @@ Rotates the password for an **existing** Db2 LDAP user.
 
 ### Storage Variables
 We recommend reviewing the Db2 documentation about the certified storage options for Db2 on Red Hat OpenShift. Please ensure your storage class meets the specified deployment requirements for [Db2uInstance](https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2uinstance-custom) and for [Db2uCluster](https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2ucluster-custom).
+
+#### db2_default_storage_class_rwo / db2_default_storage_class_rwx
+Default ReadWriteOnce / ReadWriteMany storage classes for the Db2 volumes.
+
+- Optional
+- Environment Variables: `DB2_DEFAULT_STORAGE_CLASS_RWO`, `DB2_DEFAULT_STORAGE_CLASS_RWX`
+- Default: None
+
+**Purpose**: Any of `db2_data_storage_class`, `db2_logs_storage_class` and `db2_temp_storage_class` that is not set uses `db2_default_storage_class_rwo`; any of `db2_meta_storage_class` and `db2_backup_storage_class` that is not set uses `db2_default_storage_class_rwx`. If neither is set, the cluster's auto-detected default storage classes are used. The MAS CLI install pipeline sets these from the install's RWO/RWX storage classes, so Db2-specific classes only need to be given where they differ.
 
 #### db2_meta_storage_class
 Storage class for Db2 metadata storage (must support ReadWriteMany).
