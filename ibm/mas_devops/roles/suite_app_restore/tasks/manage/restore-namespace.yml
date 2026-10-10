@@ -116,11 +116,13 @@
       does not follow the '<instanceId>-<workspaceId>' convention. Set MAS_WORKSPACE_ID explicitly.
   when: mas_workspace_id is not defined or mas_workspace_id == ''
 
-- name: "Fail if mas_workspace_id does not match the ManageWorkspace backup CR"
-  fail:
+# An explicit MAS_WORKSPACE_ID is a supported override of the value in the backup
+- name: "Warn if mas_workspace_id overrides the workspace ID in the ManageWorkspace backup CR"
+  debug:
     msg: >-
-      Requested workspace ID '{{ mas_workspace_id }}' does not match the workspace ID
-      '{{ _backup_workspace_id }}' recorded in the ManageWorkspace backup CR at {{ instance_files[0] }}.
+      MAS_WORKSPACE_ID '{{ mas_workspace_id }}' overrides the workspace ID '{{ _backup_workspace_id }}'
+      recorded in the ManageWorkspace backup CR at {{ instance_files[0] }}. Restored PVCs will be named
+      {{ mas_instance_id }}-{{ mas_workspace_id }}-<pvcName>.
   when:
     - _backup_workspace_id != ''
     - mas_workspace_id != _backup_workspace_id

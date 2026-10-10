@@ -31,7 +31,7 @@ Specifies which Db2 deployment type to use.
 
 - **Optional**
 - Environment Variable: `DB2U_KIND`
-- Default: `db2ucluster`
+- Default: `db2ucluster` (for `db2_action=upgrade`, the kind of the existing deployment when not set)
 
 **Purpose**: Controls whether to deploy Db2uCluster (deprecated) or Db2uInstance (current). This variable enables explicit control over deployment type while maintaining backward compatibility with existing deployments.
 
@@ -63,7 +63,9 @@ export DB2U_KIND=db2ucluster
 export DB2_INSTANCE_NAME=my-existing-cluster
 
 # Default behavior (backward compatible)
-# If DB2U_KIND is not set, defaults to db2ucluster
+# If DB2U_KIND is not set, defaults to db2ucluster for install.
+# For upgrade (DB2_ACTION=upgrade) an unset DB2U_KIND uses the kind of the
+# existing deployment (Db2uCluster or Db2uInstance) found in the namespace.
 export DB2_INSTANCE_NAME=my-db
 ```
 
@@ -236,6 +238,7 @@ Name of the database to create within the Db2 instance.
 **When to use**:
 - Use default (`BLUDB`) for standard MAS deployments
 - Set to a custom name when organizational standards require specific naming
+- For `db2_action=restore` the database name is always taken from the backup; if `DB2_DBNAME` is set and differs from the backup, the restore fails rather than restoring a different database
 - Must match the database name expected by applications connecting to Db2
 
 **Valid values**: Valid Db2 database name (uppercase alphanumeric, up to 8 characters, e.g., `BLUDB`, `MAXDB`, `MASDB`)
